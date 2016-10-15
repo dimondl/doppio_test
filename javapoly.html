@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>JavaPoly.js — Java(script) in the Browser</title>
+</head>
+<body>
+<!-- Include the Polyfill -->
+<script src="http://localhost:8010/javapoly.js"></script>
+<!-- Include your favorite Java libraries (jar files) -->
+<script type="text/java" src="http://localhost:8000/1.jar"></script>
+<script type="text/java" src="http://localhost:8000/2.jar"></script>
+<script type="text/java" src="http://localhost:8000/3.jar"></script>
+<script type="text/java" src="http://localhost:8000/4.jar"></script>
+<script type="text/java" src="http://localhost:8000/5.jar"></script>
+<script type="text/java" src="http://localhost:8000/6.jar"></script>
+<script type="text/java" src="http://localhost:8000/7.jar"></script>
+<script type="text/java" src="http://localhost:8000/8.jar"></script>
+<script type="text/java" src="http://localhost:8000/9.jar"></script>
+<script type="text/java" src="http://localhost:8000/10.jar"></script>
+<script type="text/java" src="http://localhost:8000/11.jar"></script>
+
+<!-- Write your Java code -->
+<script type="text/java">
+package com.mydemo;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashSet;
+import java.util.Set;
+import org.eclipse.jdt.core.dom.AST;
+import org.eclipse.jdt.core.dom.ASTParser;
+import org.eclipse.jdt.core.dom.ASTVisitor;
+import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.SimpleName;
+import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
+import com.javapoly.dom.Window;
+
+public class Test {
+
+    static String code = "public class Sample {\n" +
+            "\n" +
+            "    public static void main(String args[]) {\n" +
+            "        System.out.println(\"Hello world\");\n" +
+            "    }\n" +
+            "\n" +
+            "    public void Func() {\n" +
+            "        int d = 5;\n" +
+            "    }\n" +
+            "}";
+    public static void Do() throws IOException{
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(code);
+        /*for (String content : Files.readAllLines(FileSystems.getDefault().getPath("Sample.java"))) {
+            sb.append(content);
+            sb.append(System.lineSeparator());
+        }*/
+
+        ASTParser parser = ASTParser.newParser(AST.JLS8);
+        parser.setSource(sb.toString().toCharArray());
+        //parser.setSource("/*abc*/".toCharArray());
+        parser.setKind(ASTParser.K_COMPILATION_UNIT);
+        //ASTNode node = parser.createAST(null);
+        final CompilationUnit cu = (CompilationUnit) parser.createAST(null);
+        String result = cu.toString();
+        Window.alert("Original code " + result);
+        cu.accept(new ASTVisitor() {
+
+            Set names = new HashSet();
+
+            public boolean visit(VariableDeclarationFragment node) {
+                SimpleName name = node.getName();
+                this.names.add(name.getIdentifier());
+                Window.alert("Declaration of '"+name+"' at line"+cu.getLineNumber(name.getStartPosition()));
+                return false; // do not continue to avoid usage info
+            }
+
+            public boolean visit(SimpleName node) {
+                if (this.names.contains(node.getIdentifier())) {
+                    Window.alert("Usage of '" + node + "' at line " +	cu.getLineNumber(node.getStartPosition()));
+                }
+                return true;
+            }
+
+        });
+    }
+}
+</script>
+
+<script type="text/java">
+  package com.demo;
+  import com.javapoly.dom.Window;
+
+  public class Greeter1
+  {
+    public static void sayHello(String name)
+    {
+      
+      Window.alert("Hello " + name + ", from Java!");
+    }
+  }
+</script>
+
+<!-- Invoke your Java code from Javascript -->
+<script type="text/javascript">
+    com.demo.Greeter1.sayHello("www");
+    var promise =  com.mydemo.Test.Do();//org.eclipse.jdt.core.CorrectionEngine.getWarningToken(2);
+    promise.then(function(result) {
+        alert("in promise");
+        com.demo.Greeter1.sayHello("www");
+    }, function(err) {
+        console.log(err); // Error: "It broke"
+    });
+
+
+
+</script>
+</body>
+</html>
